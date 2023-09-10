@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "YouTubeFunctionalityExtender",
+  "name": "YouTubePlus",
   "version": "0.0.1",
 
   "host_permissions": [
@@ -31,6 +31,6 @@
     "default_icon": {
     },
     "default_popup": "popups/disabled.html",
-    "default_title": "Extend YouTube functionalities"
+    "default_title": "YouTubePlus"
   }
 }
