@@ -8,7 +8,9 @@ let pageState = States.RESTRICTED;
 
 // Listens for active tab switching and updates tab status accordingly
 chrome.tabs.onActivated.addListener(info => {
-  chrome.tabs.get(info.tabId, (tab) => updateTabStatus(tab));
+  if (info.tabId) {
+    chrome.tabs.get(info.tabId, (tab) => updateTabStatus(tab));
+  }
 });
 
 // Listens for any updates in a tab, such as URL changes, and updates tab status
