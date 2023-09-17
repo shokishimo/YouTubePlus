@@ -18,6 +18,8 @@
     } else {
       state = States.DISABLED;
     }
+    handleNewVideoLoaded();
+    showVolumeDetail();
   
     chrome.runtime.sendMessage({ type: state }, response => {
       const lastError = chrome.runtime.lastError;
@@ -35,6 +37,7 @@
         handleNewVideoLoaded();
         break;
       default:
+        handleNewVideoLoaded();
         break;
     }
   });
@@ -62,12 +65,15 @@
       ytLeftControls.appendChild(skipForwardBtn);
       skipForwardBtn.addEventListener("click", addSkipForwardEventHandler);
     }
-    const settingLogo = document.createElement("img");
-    settingLogo.src = chrome.runtime.getURL("assets/settingLogo.png");
-    settingLogo.className = "settingLogo";
-    settingLogo.title = "Click to set the amount of time (sec) to skip";
-    ytLeftControls.appendChild(settingLogo);
-    settingLogo.addEventListener("click", addSkipTimeSetting);
+    const settingLogoExists =  document.getElementsByClassName("settingLogo")[0];
+    if (!settingLogoExists) {
+      const settingLogo = document.createElement("img");
+      settingLogo.src = chrome.runtime.getURL("assets/settingLogo.png");
+      settingLogo.className = "settingLogo";
+      settingLogo.title = "Click to set the amount of time (sec) to skip";
+      ytLeftControls.appendChild(settingLogo);
+      settingLogo.addEventListener("click", addSkipTimeSetting);
+    }
   };
   
   const addSkipBackEventHandler = () => {
@@ -170,6 +176,62 @@
     };
   };
 
+  const showVolumeDetail = () => {
+    const videoElement = document.querySelector("video");
+    if (!videoElement) {
+      return;
+    }
+    let volumeDisplay = document.getElementById("volumeDisplay");
+    if (!volumeDisplay) {
+      volumeDisplay = document.createElement("div");
+      volumeDisplay.id = "volumeDisplay";
+      volumeDisplay.style.position = "absolute";
+      volumeDisplay.style.padding = "5px";
+      volumeDisplay.style.backgroundColor = "transparent";
+      volumeDisplay.style.color = "white";
+      volumeDisplay.style.zIndex = "1000";
+      volumeDisplay.style.fontSize = "11px";
+      volumeDisplay.style.display = "block";
+      document.body.appendChild(volumeDisplay);
+    }
+
+    const volumeLogo = document.getElementsByClassName("ytp-volume-area")[0];
+    if (volumeLogo) {
+        let rect = volumeLogo.getBoundingClientRect();
+        volumeDisplay.style.left = `${rect.left + 40}px`;
+        volumeDisplay.style.top = `${rect.bottom - 5}px`;
+
+        volumeLogo.addEventListener("mouseover", function() {
+          rect = document.getElementsByClassName("ytp-volume-area")[0].getBoundingClientRect();
+          volumeDisplay.style.left = `${rect.left + 40}px`;
+          volumeDisplay.style.top = `${rect.bottom - 5}px`;
+          volumeDisplay.innerHTML = `volume: ${calcVolumePercent(videoElement.volume)}%`;
+          volumeDisplay.style.display = "block";
+        });
+
+        volumeLogo.addEventListener("mouseout", function() {
+          volumeDisplay.style.display = "none";
+        });
+    }
+
+    videoElement.addEventListener("volumechange", function() {
+      console.log(videoElement.volume);
+      console.log(calcVolumePercent(videoElement.volume));
+      volumeDisplay.innerHTML = `volume: ${calcVolumePercent(videoElement.volume)}%`;
+      if (volumeDisplay.style.display !== "block") {
+        volumeDisplay.style.display = "block";
+        setTimeout(() => {
+          volumeDisplay.style.display = "none";  // Hide it after a short delay
+        }, 2000);  // 2 seconds delay
+      }
+    });
+  };
+
+  const calcVolumePercent = (volume) => {
+    const maxVolumeConfig = 1;
+    return Math.round((volume * 100) / maxVolumeConfig);
+  };
+
 
   // control the layout rendering of the page
   const observeControls = () => {
@@ -179,9 +241,17 @@
     };
 
     const callback = (mutationsList, observer) => {
+      let count = 0;
       for (let mutation of mutationsList) {
         if (mutation.type === "childList" && document.getElementsByClassName("ytp-left-controls")[0]) {
           handleNewVideoLoaded();
+          count+=1;
+        } 
+        if (mutation.type === "childList" && document.getElementsByClassName("ytp-volume-area")[0]) {
+          showVolumeDetail();
+          count+=1;
+        }
+        if (count >= 2) {
           observer.disconnect(); // Disconnect observer once we've found our element
           break;
         }
