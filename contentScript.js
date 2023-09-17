@@ -17,12 +17,18 @@
     contextMenu.style.zIndex = "9999";
     contextMenu.style.display = "none";
     contextMenu.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+
     const title = document.createElement("div");
     title.innerText = `seconds`;
     title.style.fontSize = "14px";
     title.style.color = "white";
     title.style.margin = "6px";
     contextMenu.appendChild(title);
+    
+    const line = document.createElement("div");
+    line.style.height = "1px";
+    line.style.backgroundColor = "white";
+    contextMenu.appendChild(line);
 
     timeOptions.forEach((opt) => {
       const itemWrapper = document.createElement("div");
@@ -97,25 +103,30 @@
       const skipBackBtn = document.createElement("img");
       skipBackBtn.src = chrome.runtime.getURL("assets/skipBackBtn.png");
       skipBackBtn.className = "skipBackBtn";
-      skipBackBtn.title = "Click to rewind the viodeo. Right-click to set the amount of time(sec) to skip";
+      skipBackBtn.title = "Click to rewind the viodeo";
   
       ytLeftControls = document.getElementsByClassName("ytp-left-controls")[0];
       ytLeftControls.appendChild(skipBackBtn);
       skipBackBtn.addEventListener("click", addSkipBackEventHandler);
-      skipBackBtn.addEventListener("contextmenu", addSkipTimeSetting);
     }
     const skipForwardBtnExists = document.getElementsByClassName("skipForwardBtn")[0];
     if (!skipForwardBtnExists) {
       const skipForwardBtn = document.createElement("img");
       skipForwardBtn.src = chrome.runtime.getURL("assets/skipForwardBtn.png");
       skipForwardBtn.className = "skipForwardBtn";
-      skipForwardBtn.title = "Click to skip forward the viodeo. Right-click to set the amount of time (sec) to skip";
+      skipForwardBtn.title = "Click to skip forward the viodeo";
   
       ytLeftControls = document.getElementsByClassName("ytp-left-controls")[0];
       ytLeftControls.appendChild(skipForwardBtn);
       skipForwardBtn.addEventListener("click", addSkipForwardEventHandler);
-      skipForwardBtn.addEventListener("contextmenu", addSkipTimeSetting);
     }
+    const settingLogo = document.createElement("img");
+    settingLogo.src = chrome.runtime.getURL("assets/settingLogo.png");
+    settingLogo.className = "settingLogo";
+    settingLogo.title = "Click to set the amount of time (sec) to skip";
+    ytLeftControls = document.getElementsByClassName("ytp-left-controls")[0];
+    ytLeftControls.appendChild(settingLogo);
+    settingLogo.addEventListener("click", addSkipTimeSetting);
   };
   
   const addSkipBackEventHandler = () => {
@@ -141,19 +152,37 @@
     e.preventDefault(); // Prevent the default context menu from showing
     e.stopPropagation(); // Prevent the default context menu from showing
 
-    if (document.getElementsByClassName("customContextMenu")[0]) return;
-    const targetContextMenu = e.target.className.includes("skipBackBtn") ? 
-      createContextMenu(true) : createContextMenu(false);
-    targetContextMenu.style.position = "absolute";
-    targetContextMenu.style.top = `${e.clientY}px`;
-    targetContextMenu.style.left = `${e.clientX + 30}px`;
-    targetContextMenu.style.display = "block";
-    targetContextMenu.style.visibility = "visible";
-    document.body.appendChild(targetContextMenu);
+    const targetContextMenuId = e.target.className.includes("skipBackBtn") ? 
+      "skipBackContextMenu" : "skipForwardContextMenu";
+    // If the contextMenu is already displayed, we don't need to create it again
+    if (document.body.contains(document.getElementById(targetContextMenuId))) {
+      const contentMenu = document.getElementById(targetContextMenuId);
+      contentMenu.style.top = `${e.clientY}px`;
+      contentMenu.style.left = `${e.clientX + 30}px`;
+      contentMenu.style.display = "block";
+      document.addEventListener("click", outsideClickListener);
+      document.addEventListener("contextmenu", outsideClickListener);
+    } else {
+      const targetContextMenu = (targetContextMenuId === "skipBackContextMenu") ? 
+        createContextMenu(true) : createContextMenu(false);
+      targetContextMenu.style.position = "absolute";
+      targetContextMenu.style.top = `${e.clientY}px`;
+      targetContextMenu.style.left = `${e.clientX + 30}px`;
+      targetContextMenu.style.display = "block";
+      document.body.appendChild(targetContextMenu);
+      // Listener to handle clicks (or right-click) outside the contextMenu
+      document.addEventListener("click", outsideClickListener);
+      document.addEventListener("contextmenu", outsideClickListener);
+    }
+  };
 
-    document.addEventListener("click", () => {
-      
-    });
+  function outsideClickListener(_event) {
+    const skipbackCM = document.getElementById("skipBackContextMenu");
+    const skipForwardCM = document.getElementById("skipForwardContextMenu");
+    if (skipbackCM && skipbackCM.style.display === "block") skipbackCM.style.display = "none";
+    if (skipForwardCM && skipForwardCM.style.display === "block") skipForwardCM.style.display = "none";
+    document.removeEventListener("click", outsideClickListener);
+    document.removeEventListener("contextmenu", outsideClickListener);
   };
 
 

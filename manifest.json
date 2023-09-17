@@ -22,7 +22,8 @@
     {
       "resources": [
         "assets/skipBackBtn.png",
-        "assets/skipForwardBtn.png"
+        "assets/skipForwardBtn.png",
+        "assets/settingLogo.png"
       ],
       "matches": ["https://*.youtube.com/*"]
     }
