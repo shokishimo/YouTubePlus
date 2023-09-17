@@ -72,14 +72,13 @@ chrome.runtime.onMessage.addListener((message, sender) => {
  * @param {number} tabId - The ID of the tab.
  */
 function setIconAndPopup(buildState, tabId) {
-  // Placeholder for setting the extension icon based on buildState
   // chrome.action.setIcon({
   //   tabId: tabId,
   //   path: {
-  //     '16': chrome.runtime.getURL(`icons/${buildState}-16.png`),
-  //     '32': chrome.runtime.getURL(`icons/${buildState}-32.png`),
-  //     '48': chrome.runtime.getURL(`icons/${buildState}-48.png`),
-  //     '128': chrome.runtime.getURL(`icons/${buildState}-128.png`),
+  //     '16': chrome.runtime.getURL(`icons/logo16.png`),
+  //     '32': chrome.runtime.getURL(`icons/logo32.png`),
+  //     '48': chrome.runtime.getURL(`icons/icon48.png`),
+  //     '128': chrome.runtime.getURL(`icons/icon128.png`),
   //   }
   // });
 
