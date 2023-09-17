@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTubePlus",
-  "version": "0.0.1",
+  "version": "0.0.0.1",
   "description": "YouTubePlus is an extension that enhances your overall youtube experiences",
 
   "host_permissions": [
