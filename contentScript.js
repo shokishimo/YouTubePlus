@@ -190,7 +190,7 @@
       volumeDisplay.style.backgroundColor = "transparent";
       volumeDisplay.style.color = "white";
       volumeDisplay.style.zIndex = "1000";
-      volumeDisplay.style.fontSize = "11px";
+      volumeDisplay.style.fontSize = "12px";
       volumeDisplay.style.display = "block";
       document.body.appendChild(volumeDisplay);
     }
@@ -215,8 +215,6 @@
     }
 
     videoElement.addEventListener("volumechange", function() {
-      console.log(videoElement.volume);
-      console.log(calcVolumePercent(videoElement.volume));
       volumeDisplay.innerHTML = `volume: ${calcVolumePercent(videoElement.volume)}%`;
       if (volumeDisplay.style.display !== "block") {
         volumeDisplay.style.display = "block";
