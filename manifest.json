@@ -4,10 +4,7 @@
   "version": "0.0.1",
   "description": "YouTubePlus is an extension that enhances your overall youtube experiences such as skipping video feature and sound volume display",
 
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
+  "host_permissions": ["<all_urls>"],
   "permissions": ["storage", "tabs", "activeTab"],
   "background": {
     "service_worker": "build/background.js",
