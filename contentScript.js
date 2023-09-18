@@ -19,7 +19,6 @@
       state = States.DISABLED;
     }
     handleNewVideoLoaded();
-    showVolumeDetail();
   
     chrome.runtime.sendMessage({ type: state }, response => {
       const lastError = chrome.runtime.lastError;
@@ -74,23 +73,24 @@
       ytLeftControls.appendChild(settingLogo);
       settingLogo.addEventListener("click", addSkipTimeSetting);
     }
+    showVolumeDetail();
   };
   
   const addSkipBackEventHandler = () => {
-    const videoElement = document.querySelector("video");
-    if (videoElement) {
-      const newTime = videoElement.currentTime - timeToSkip;
-      videoElement.currentTime = (newTime > 0) ? newTime : 0;
+    const videoElement1 = document.querySelector("video");
+    if (videoElement1) {
+      const newTime = videoElement1.currentTime - timeToSkip;
+      videoElement1.currentTime = (newTime > 0) ? newTime : 0;
     }
   };
 
   const addSkipForwardEventHandler = () => {
-    const videoElement = document.querySelector("video");
-    if (videoElement) {
-      const newTime = videoElement.currentTime + timeToSkip;
-      const videoDuration = videoElement.duration;
+    const videoElement2 = document.querySelector("video");
+    if (videoElement2) {
+      const newTime = videoElement2.currentTime + timeToSkip;
+      const videoDuration = videoElement2.duration;
       if (videoDuration) {
-        videoElement.currentTime = (newTime < videoDuration) ? newTime : videoDuration;
+        videoElement2.currentTime = (newTime < videoDuration) ? newTime : videoDuration;
       }
     }
   };
@@ -101,6 +101,7 @@
     contextMenu.style.zIndex = "9999";
     contextMenu.style.display = "none";
     contextMenu.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+    contextMenu.style.borderRadius = "5px";
 
     const title = document.createElement("div");
     title.innerText = "seconds";
@@ -152,13 +153,13 @@
     // If the contextMenu already exists, we don't need to create it again
     let targetContextMenu = document.getElementById("contextMenu")
     if (targetContextMenu) {
-      targetContextMenu.style.top = `${e.clientY}px`;
+      targetContextMenu.style.top = `${e.clientY - 200}px`;
       targetContextMenu.style.left = `${e.clientX + 30}px`;
       targetContextMenu.style.display = "block";
     } else {
       targetContextMenu = createContextMenu();
       targetContextMenu.style.position = "absolute";
-      targetContextMenu.style.top = `${e.clientY}px`;
+      targetContextMenu.style.top = `${e.clientY - 200}px`;
       targetContextMenu.style.left = `${e.clientX + 30}px`;
       targetContextMenu.style.display = "block";
       document.body.appendChild(targetContextMenu);
@@ -177,8 +178,8 @@
   };
 
   const showVolumeDetail = () => {
-    const videoElement = document.querySelector("video");
-    if (!videoElement) {
+    const video = document.querySelector("video");
+    if (!video) {
       return;
     }
     let volumeDisplay = document.getElementById("volumeDisplay");
@@ -186,48 +187,43 @@
       volumeDisplay = document.createElement("div");
       volumeDisplay.id = "volumeDisplay";
       volumeDisplay.style.position = "absolute";
-      volumeDisplay.style.padding = "5px";
-      volumeDisplay.style.backgroundColor = "transparent";
+      volumeDisplay.style.padding = "2px";
+      volumeDisplay.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
       volumeDisplay.style.color = "white";
       volumeDisplay.style.zIndex = "1000";
       volumeDisplay.style.fontSize = "12px";
+      volumeDisplay.style.borderRadius = "5px";
       volumeDisplay.style.display = "block";
       document.body.appendChild(volumeDisplay);
     }
 
-    const volumeLogo = document.getElementsByClassName("ytp-volume-area")[0];
-    if (volumeLogo) {
-        let rect = volumeLogo.getBoundingClientRect();
-        volumeDisplay.style.left = `${rect.left + 40}px`;
-        volumeDisplay.style.top = `${rect.bottom - 5}px`;
-
-        volumeLogo.addEventListener("mouseover", function() {
-          rect = document.getElementsByClassName("ytp-volume-area")[0].getBoundingClientRect();
-          volumeDisplay.style.left = `${rect.left + 40}px`;
-          volumeDisplay.style.top = `${rect.bottom - 5}px`;
-          volumeDisplay.innerHTML = `volume: ${calcVolumePercent(videoElement.volume)}%`;
+    const volumeMuteButton = document.getElementsByClassName("ytp-mute-button ytp-button")[0];
+    const volumePanel = document.getElementsByClassName("ytp-volume-panel")[0];
+    if (volumeMuteButton && volumePanel) {
+        volumeMuteButton.addEventListener("mouseover", showVolumeSize);
+        volumePanel.addEventListener("mouseover", showVolumeSize);
+        function showVolumeSize() {
+          const VolumeSizeEle = document.getElementsByClassName("ytp-volume-panel")[0];
+          const rect = VolumeSizeEle.getBoundingClientRect();
+          volumeDisplay.style.left = `${rect.left}px`;
+          volumeDisplay.style.top = `${rect.bottom - 50}px`;
+          volumeDisplay.innerHTML = `volume: ${VolumeSizeEle.ariaValueNow}%`;
           volumeDisplay.style.display = "block";
-        });
+        }
 
-        volumeLogo.addEventListener("mouseout", function() {
+        volumeMuteButton.addEventListener("mouseout", function() {
+          volumeDisplay.style.display = "none";
+        });
+        volumePanel.addEventListener("mouseout", function() {
           volumeDisplay.style.display = "none";
         });
     }
 
-    videoElement.addEventListener("volumechange", function() {
-      volumeDisplay.innerHTML = `volume: ${calcVolumePercent(videoElement.volume)}%`;
-      if (volumeDisplay.style.display !== "block") {
-        volumeDisplay.style.display = "block";
-        setTimeout(() => {
-          volumeDisplay.style.display = "none";  // Hide it after a short delay
-        }, 2000);  // 2 seconds delay
-      }
+    video.addEventListener("volumechange", function() {
+      const volumePanel = document.getElementsByClassName("ytp-volume-panel")[0];
+      volumeDisplay.innerHTML = `volume: ${volumePanel.ariaValueNow}%`;
+      volumeDisplay.style.display = "block";
     });
-  };
-
-  const calcVolumePercent = (volume) => {
-    const maxVolumeConfig = 1;
-    return Math.round((volume * 100) / maxVolumeConfig);
   };
 
 
@@ -239,17 +235,9 @@
     };
 
     const callback = (mutationsList, observer) => {
-      let count = 0;
       for (let mutation of mutationsList) {
         if (mutation.type === "childList" && document.getElementsByClassName("ytp-left-controls")[0]) {
           handleNewVideoLoaded();
-          count+=1;
-        } 
-        if (mutation.type === "childList" && document.getElementsByClassName("ytp-volume-area")[0]) {
-          showVolumeDetail();
-          count+=1;
-        }
-        if (count >= 2) {
           observer.disconnect(); // Disconnect observer once we've found our element
           break;
         }
