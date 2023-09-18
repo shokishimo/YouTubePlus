@@ -206,7 +206,7 @@
           const VolumeSizeEle = document.getElementsByClassName("ytp-volume-panel")[0];
           const rect = VolumeSizeEle.getBoundingClientRect();
           volumeDisplay.style.left = `${rect.left}px`;
-          volumeDisplay.style.top = `${rect.bottom - 50}px`;
+          volumeDisplay.style.top = `${rect.bottom - 20}px`;
           volumeDisplay.innerHTML = `volume: ${VolumeSizeEle.ariaValueNow}%`;
           volumeDisplay.style.display = "block";
         }
