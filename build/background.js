@@ -8,9 +8,13 @@ let pageState = States.RESTRICTED;
 
 // Listens for active tab switching and updates tab status accordingly
 chrome.tabs.onActivated.addListener(info => {
-  if (info.tabId) {
-    chrome.tabs.get(info.tabId, (tab) => updateTabStatus(tab));
-  }
+  chrome.tabs.get(info.tabId, (tab) => {
+    if (chrome.runtime.lastError) {
+      console.warn("Background.js: Failed to get tab:", chrome.runtime.lastError);
+      return;
+    }
+    updateTabStatus(tab);
+  });
 });
 
 // Listens for any updates in a tab, such as URL changes, and updates tab status
@@ -19,17 +23,23 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
     // If the tab is a popup, send a message to the content script
     if (pageState === States.POPUP) {
-      const urlParameters = new URLSearchParams(tab.url.split("?")[1]);
+      chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+        if (!tabs.length) return; // No active tab found
+        const activeTab = tabs[0];
+        if (activeTab.id !== tabId) return; // The tab is no longer active
+    
+        const urlParameters = new URLSearchParams(tab.url.split("?")[1]);
 
-      chrome.tabs.sendMessage(tabId, {
-        type: "NEW",
-        videoId: urlParameters.get("v"),
-      }, response => {
-        const lastError = chrome.runtime.lastError;
-        if (lastError) {
-            console.warn("Background.js: Failed to send message:", lastError);
-            return;
-        }
+        chrome.tabs.sendMessage(tabId, {
+          type: "NEW",
+          videoId: urlParameters.get("v"),
+        }, response => {
+          const lastError = chrome.runtime.lastError;
+          if (lastError) {
+              console.warn("Background.js: Failed to send message:", lastError);
+              return;
+          }
+        });
       });
     }
   }
@@ -72,19 +82,26 @@ chrome.runtime.onMessage.addListener((message, sender) => {
  * @param {number} tabId - The ID of the tab.
  */
 function setIconAndPopup(buildState, tabId) {
-  // chrome.action.setIcon({
-  //   tabId: tabId,
-  //   path: {
-  //     '16': chrome.runtime.getURL(`icons/logo16.png`),
-  //     '32': chrome.runtime.getURL(`icons/logo32.png`),
-  //     '48': chrome.runtime.getURL(`icons/icon48.png`),
-  //     '128': chrome.runtime.getURL(`icons/icon128.png`),
-  //   }
-  // });
+  chrome.tabs.get(tabId, (tab) => {
+    if (chrome.runtime.lastError) {
+      console.warn("Background.js: Failed to get tab:", chrome.runtime.lastError);
+      return;
+    }
 
-  // Sets the popup for the extension based on buildState
-  chrome.action.setPopup({
-    tabId: tabId,
-    popup: chrome.runtime.getURL(`/popups/${buildState}.html`)
+    // chrome.action.setIcon({
+    //   tabId: tabId,
+    //   path: {
+    //     '16': chrome.runtime.getURL(`icons/logo16.png`),
+    //     '32': chrome.runtime.getURL(`icons/logo32.png`),
+    //     '48': chrome.runtime.getURL(`icons/icon48.png`),
+    //     '128': chrome.runtime.getURL(`icons/icon128.png`),
+    //   }
+    // });
+
+    // Sets the popup for the extension based on buildState
+    chrome.action.setPopup({
+      tabId: tabId,
+      popup: chrome.runtime.getURL(`/popups/${buildState}.html`)
+    });
   });
 }
